@@ -39,12 +39,9 @@
 </head>
 <body>
     <h1>Payment Status</h1>
-    <p class="status {{ $paymentStatus === 'success' ? 'success' : 'failed' }}">
-        {{ $paymentStatus === 'success' ? 'Your payment was successful!' : 'Payment failed. Please try again.' }}
+    <p >
+        payment successfully received
     </p>
-    @if(isset($transactionId))
-        <p>Transaction ID: {{ $transactionId }}</p>
-    @endif
 
     <h2>Full Response</h2>
     <pre>{{ json_encode($responseData, JSON_PRETTY_PRINT) }}</pre>
