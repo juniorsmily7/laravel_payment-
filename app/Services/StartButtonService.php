@@ -15,19 +15,20 @@ class StartButtonService
         $this->publicKey = config('services.startbutton.public_key');
     }
 
-    public function initializeTransaction($amount, $currency, $email)
+    public function initializeTransaction($amount, $currency, $email, $redirectUrl)
     {
-        $url = "{$this->baseUrl}/transaction/initialize";
-
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$this->publicKey}",
-            'Content-Type' => 'application/json',
-        ])->post($url, [
+        $redirectUrl = route('payment.response'); // Generate the callback URL dynamically
+        $payload = [
             'amount' => $amount,
             'currency' => $currency,
             'email' => $email,
-        ]);
+            'redirectUrl' => $redirectUrl, // Add redirect URL to payload
+        ];
+
+        $response = Http::withToken(env('STARTBUTTON_PUBLIC_KEY'))
+                        ->post(config('services.startbutton.base_url') . '/transaction/initialize', $payload);
 
         return $response->json();
     }
+
 }

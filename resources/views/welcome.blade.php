@@ -51,6 +51,7 @@
         <select id="currency" required>
             <option value="GHS">GHS</option>
             <option value="USD">USD</option>
+            <option value="NGN">NGN</option>
         </select>
 
         <button type="submit">Initialize Transaction</button>
@@ -68,9 +69,7 @@
     const email = document.getElementById('email').value;
     const amount = document.getElementById('amount').value;
     const currency = document.getElementById('currency').value;
-
-    resultDiv.style.display = 'none';
-    resultDiv.classList.remove('error');
+    const redirectUrl = "https://www.google.com/"; // Hardcoded redirect URL
 
     try {
         const response = await fetch('/payment', {
@@ -79,13 +78,12 @@
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
             },
-            body: JSON.stringify({ email, amount, currency }),
+            body: JSON.stringify({ email, amount, currency, redirectUrl }), // Include redirectUrl
         });
 
         const data = await response.json();
 
         if (response.ok && data.success) {
-            // Redirect to the payment page
             window.location.href = data.data;
         } else {
             throw new Error(data.message || 'An error occurred');
@@ -96,6 +94,7 @@
         resultDiv.style.display = 'block';
     }
 });
+
 
     </script>
 </body>
