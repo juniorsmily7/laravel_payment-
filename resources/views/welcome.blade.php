@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>StartButton Payment Test</title>
+    <title>Static Payment Integration Test</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,82 +20,114 @@
         label {
             margin-bottom: 10px;
         }
-        input, select, button {
+        select, button {
             padding: 10px;
             margin-bottom: 20px;
             font-size: 16px;
         }
-        .result {
-            background: #e8f5e9;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 20px;
-        }
-        .error {
-            background: #fdecea;
-            color: #d32f2f;
+        .amount-display {
+            font-size: 18px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>StartButton Payment Integration Test</h1>
-    <form id="paymentForm">
+    <h1>Static Payment Integration Test</h1>
+    <form id="paymentForm" method="POST">
         @csrf
-        <label for="email">Email:</label>
-        <input type="email" id="email" placeholder="Enter customer email" required>
 
-        <label for="amount">Amount:</label>
-        <input type="number" id="amount" placeholder="Enter amount in cents" required>
-
+        <!-- Currency Selection -->
         <label for="currency">Currency:</label>
         <select id="currency" required>
-            <option value="GHS">GHS</option>
             <option value="USD">USD</option>
             <option value="NGN">NGN</option>
+            <option value="GHS">GHS</option>
+            <option value="KES">KES</option>
+            <option value="ZAR">ZAR</option>
+            <option value="UGX">UGX</option>
+            <option value="TZS">TZS</option>
+            <option value="RWF">RWF</option>
+            <option value="XOF">XOF</option>
         </select>
 
-        <button type="submit">Initialize Transaction</button>
-    </form>
+        <!-- Amount to Pay -->
+        <div class="amount-display">
+            <strong>Amount to Pay:</strong> <span id="displayAmount">10 USD</span>
+        </div>
 
-    <div id="result" class="result" style="display: none;"></div>
+        <!-- Submit Button -->
+        <button type="submit">Proceed to Pay</button>
+    </form>
 
     <script>
         const paymentForm = document.getElementById('paymentForm');
-        const resultDiv = document.getElementById('result');
+        const currencySelect = document.getElementById('currency');
+        const displayAmount = document.getElementById('displayAmount');
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+        // Exchange rates (1 USD equivalent)
+        const exchangeRates = {
+            USD: 1,
+            NGN: 780,
+            GHS: 12,
+            KES: 145,
+            ZAR: 18,
+            UGX: 3700,
+            TZS: 2500,
+            RWF: 1200,
+            XOF: 620,
+        };
+
+        // Function to update the displayed amount when the currency changes
+        function updateAmountDisplay() {
+            const selectedCurrency = currencySelect.value;
+            const exchangeRate = exchangeRates[selectedCurrency];
+            const amountInCurrency = (10 * exchangeRate).toFixed(2); // Convert $10 to selected currency
+            displayAmount.textContent = `${amountInCurrency} ${selectedCurrency}`;
+        }
+
+        // Update the displayed amount on currency change
+        currencySelect.addEventListener('change', updateAmountDisplay);
+
+        // Handle form submission
         paymentForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+            e.preventDefault();
 
-    const email = document.getElementById('email').value;
-    const amount = document.getElementById('amount').value;
-    const currency = document.getElementById('currency').value;
-    const redirectUrl = "https://www.google.com/"; // Hardcoded redirect URL
+            const selectedCurrency = currencySelect.value;
+            const exchangeRate = exchangeRates[selectedCurrency];
+            const amountInCents = Math.round(10 * exchangeRate * 100); // Convert to cents
 
-    try {
-        const response = await fetch('/payment', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            },
-            body: JSON.stringify({ email, amount, currency, redirectUrl }), // Include redirectUrl
+            try {
+                const response = await fetch('/payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        email: "test@gmail.com",  // Static or user-provided email
+                        amount: amountInCents,       // Send the dynamic amount in cents
+                        currency: selectedCurrency,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Redirecting to payment page...');
+                    window.location.href = data.data; // Redirect to the payment page
+                } else {
+                    alert('Error initializing payment: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                alert('An error occurred while initializing the payment.');
+            }
         });
 
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-            window.location.href = data.data;
-        } else {
-            throw new Error(data.message || 'An error occurred');
-        }
-    } catch (error) {
-        resultDiv.textContent = `Error: ${error.message}`;
-        resultDiv.classList.add('error');
-        resultDiv.style.display = 'block';
-    }
-});
-
-
+        // Initialize with default amount display
+        updateAmountDisplay();
     </script>
+
 </body>
 </html>

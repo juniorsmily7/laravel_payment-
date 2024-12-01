@@ -41,6 +41,7 @@
     <h1>Payment Status</h1>
     <p >
         payment successfully received
+
     </p>
 
     <h2>Full Response</h2>
