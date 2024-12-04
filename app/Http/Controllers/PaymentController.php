@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Services\StartButtonService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
@@ -20,9 +22,11 @@ class PaymentController extends Controller
         // Validate incoming request
         $validated = $request->validate([
             'currency' => 'required|string',
-            'email' => 'required|email',
             'amount' => 'required|integer', // Amount should be an integer (in cents)
         ]);
+
+        // Hardcode the email
+        $email = 'test@gmail.com';
 
         // Prepare the amount (already in cents)
         $amountInCents = $validated['amount'];
@@ -31,7 +35,7 @@ class PaymentController extends Controller
         $response = $this->startButtonService->initializeTransaction(
             $amountInCents,
             $validated['currency'],
-            $validated['email'],
+            $email, // Using the hardcoded email here
             route('payment.response')  // Redirect URL after payment
         );
 
@@ -49,15 +53,80 @@ class PaymentController extends Controller
         $paymentStatus = $request->query('status'); // e.g., 'success' or 'failed'
         $transactionId = $request->query('transaction_id'); // Transaction ID
 
-        // Assuming the user's email or ID is passed in the query parameters
-        $userEmail = "test@gmail.com";
+        // Use the hardcoded email here again
+        $userEmail = 'test@gmail.com';
 
-        $responseData = $request->all(); // All query parameters or response body
-        $user = \App\Models\User::where('email', $userEmail)->first();
+        // Initialize an array to capture the full response data
+        $responseData = $request->all(); // Capture all response data
+
+        // Update the 'has_paid' column if payment is successful
+        if ($paymentStatus === 'success') {
+            // Find the user by email
+            $user = User::where('email', $userEmail)->first();
+
+            if ($user) {
+                // Update the 'has_paid' column to true
+                $user->update(['has_paid' => true]);
+                // Log success
+                logger()->info("User {$user->email} has been marked as paid.");
+            } else {
+                // Log error if user is not found
+                logger()->error("User with email {$userEmail} not found.");
+                return response()->json(['error' => 'User not found.'], 404);
+            }
+        }
+
+        // Return the response data to a view for further processing
+        return view('payment-response', compact('paymentStatus', 'transactionId', 'userEmail', 'responseData'));
+    }
+    public function handleWebhook(Request $request)
+    {
+        // Log the raw request for debugging
+        Log::info('StartButton Webhook Received:', $request->all());
+
+        // Verify the webhook signature
+        if (!$this->verifyWebhookSignature($request)) {
+            return response()->json(['error' => 'Invalid Signature'], 400);
+        }
+
+        // Parse the event from the request
+        $event = $request->input('event');
+        $data = $request->input('data');
+
+        // Handle different events (e.g., collection.verified, collection.completed)
+        if ($event == 'collection.verified') {
+            $transactionData = $data['transaction'];
+
+            // Example: Update user based on transaction data
+            $userEmail = $transactionData['customerEmail'];
+            $user = User::where('email', $userEmail)->first();
+
             if ($user) {
                 $user->update(['has_paid' => true]);
             }
-        // Return the response data to a view for further processing
-        return view('payment-response', compact('paymentStatus', 'transactionId', 'responseData'));
+
+            // Log transaction details
+            Log::info("User {$userEmail} payment verified", ['transaction' => $transactionData]);
+        }
+
+        // Return a 200 OK response to acknowledge receipt of the webhook
+        return response()->json(['status' => 'success']);
     }
+
+    // Verify the webhook signature
+    private function verifyWebhookSignature(Request $request)
+    {
+        // Replace this with your StartButton Secret Key
+        $secret = env('STARTBUTTON_SECRET_KEY');
+
+        // Get the signature from the request headers
+        $signature = $request->header('x-startbutton-signature');
+
+        // Calculate the expected signature
+        $calculatedSignature = hash_hmac('sha512', json_encode($request->all()), $secret);
+
+        // Compare signatures
+        return hash_equals($calculatedSignature, $signature);
+    }
+
 }

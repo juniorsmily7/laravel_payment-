@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PaymentController;
-
+use App\Http\Controllers\WebhookController;
 Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
@@ -11,3 +11,6 @@ Route::get('/', function () {
 Route::post('/payment', [PaymentController::class, 'initialize']);
 
 Route::get('/payment-response', [PaymentController::class, 'paymentResponse'])->name('payment.response');
+
+
+Route::post('/webhook/startbutton', [WebhookController::class, 'handleWebhook']);

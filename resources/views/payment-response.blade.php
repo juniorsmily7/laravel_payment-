@@ -4,49 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Response</title>
-    <script>
-        // Log the payment response to the console for testing
-        const responseData = @json($responseData);
-        console.log('Payment Response:', responseData);
-    </script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-            background-color: #f4f4f9;
-        }
-        .status {
-            font-size: 24px;
-            margin: 20px 0;
-        }
-        .success {
-            color: green;
-        }
-        .failed {
-            color: red;
-        }
-        pre {
-            text-align: left;
-            background: #f8f8f8;
-            padding: 15px;
-            border-radius: 5px;
-            max-width: 600px;
-            margin: 20px auto;
-            overflow-x: auto;
-        }
-    </style>
 </head>
 <body>
-    <h1>Payment Status</h1>
-    <p >
-        payment successfully received
+    <h1>Payment Response</h1>
 
-    </p>
+    <p><strong>Payment Status:</strong> {{ $paymentStatus }}</p>
 
-    <h2>Full Response</h2>
-    <pre>{{ json_encode($responseData, JSON_PRETTY_PRINT) }}</pre>
+    <p><strong>Transaction ID:</strong> {{ $transactionId }}</p>
 
-    <a href="{{ route('welcome') }}">Go Back to Home</a>
+    <p><strong>User Email:</strong> {{ $userEmail }}</p>
+
+    <h3>Full Response Data:</h3>
+    <pre>{{ print_r($responseData, true) }}</pre>
 </body>
 </html>

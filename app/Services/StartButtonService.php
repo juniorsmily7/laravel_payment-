@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
@@ -15,20 +14,28 @@ class StartButtonService
         $this->publicKey = config('services.startbutton.public_key');
     }
 
-    // Initialize a payment transaction
+    // Initialize transaction
     public function initializeTransaction($amount, $currency, $email, $redirectUrl)
     {
         $payload = [
             'amount' => $amount,
             'currency' => $currency,
             'email' => $email,
-            'redirectUrl' => $redirectUrl, // The callback URL after the payment
+            'redirectUrl' => $redirectUrl, // Add redirect URL to payload
         ];
 
-        // Send a POST request to the payment provider
         $response = Http::withToken(env('STARTBUTTON_PUBLIC_KEY'))
                         ->post($this->baseUrl . '/transaction/initialize', $payload);
 
-        return $response->json(); // Return the response as an array
+        return $response->json();
+    }
+
+    // Retrieve transaction status by ID
+    public function getTransactionStatus($transactionId)
+    {
+        $response = Http::withToken(env('STARTBUTTON_PUBLIC_KEY'))
+                        ->get($this->baseUrl . "/transaction/{$transactionId}/status");
+
+        return $response->json();
     }
 }
