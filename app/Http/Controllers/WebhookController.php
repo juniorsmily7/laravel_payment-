@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -25,7 +26,17 @@ class WebhookController extends Controller
             $eventData = json_decode($requestBody, true);
             logger()->info('Event Data', $eventData);
             // Do something with the event data
-        } else {
+            if($eventData->event == 'collection.verified') {
+                $customeEmail =  $eventData->data->transaction->customeEmail;
+                $user = User::where('email', $customeEmail)->first();
+                logger()->info('User email:', $customeEmail);
+            if ($user) {
+                $user->update(['has_paid' => true]);
+            }
+            }
+
+        }
+        else {
             logger()->error('Invalid webhook signature.');
         }
 
