@@ -10,7 +10,7 @@ Route::get('/', function () {
 // Correct Route syntax
 Route::post('/payment', [PaymentController::class, 'initialize']);
 
-Route::get('/payment-response', [PaymentController::class, 'paymentResponse'])->name('payment.response');
+Route::get('/payment-response', [PaymentController::class, 'paymentResponse']);
 
 
-Route::post('/webhook/startbutton', [WebhookController::class, 'handleWebhook']);
+Route::post('/webhook/startbutton', [WebhookController::class, 'handleWebhook'])->name('WebhookHandler');

@@ -36,7 +36,7 @@ class PaymentController extends Controller
             $amountInCents,
             $validated['currency'],
             $email, // Using the hardcoded email here
-            route('payment.response')  // Redirect URL after payment
+            'https://4212-196-221-162-245.ngrok-free.app/payment-response' // Redirect URL after payment
         );
 
         // Return the response data (which contains the payment URL for redirection)
@@ -47,7 +47,7 @@ class PaymentController extends Controller
     public function paymentResponse(Request $request)
     {
         // Log query parameters (for debugging)
-        logger()->info('Payment Response', $request->all());
+        logger()->info('Payment Response', [$request]);
 
         // Capture the payment status and transaction ID
         $paymentStatus = $request->query('status'); // e.g., 'success' or 'failed'
