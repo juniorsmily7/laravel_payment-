@@ -42,7 +42,31 @@ class PaymentController extends Controller
         // Return the response data (which contains the payment URL for redirection)
         return response()->json($response);
     }
+    public function initializeIELTS(Request $request)
+    {
+        // Validate incoming request
+        $validated = $request->validate([
+            'currency' => 'required|string',
+            'amount' => 'required|integer', // Amount should be an integer (in cents)
+        ]);
 
+        // Hardcode the email
+        $email = 'test@gmail.com';
+
+        // Prepare the amount (already in cents)
+        $amountInCents = $validated['amount'];
+
+        // Call the StartButton service to initialize the transaction
+        $response = $this->startButtonService->initializeTransaction(
+            $amountInCents,
+            $validated['currency'],
+            $email, // Using the hardcoded email here
+            route('paidCode') // Redirect URL after payment
+        );
+
+        // Return the response data (which contains the payment URL for redirection)
+        return response()->json($response);
+    }
     // Handle the payment response (redirected here after the payment)
     public function paymentResponse(Request $request)
     {
